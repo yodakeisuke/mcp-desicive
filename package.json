@@ -1,38 +1,43 @@
 {
-  "name": "mcp-worktree",
+  "name": "mcp-template",
   "version": "0.0.1",
-  "description": "mcp server for multi agent orchestration",
+  "description": "Minimal MCP server template with structured output",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "mcp-template": "./bin/start.js"
+  },
+  "files": [
+    "dist/**/*",
+    "bin/**/*"
+  ],
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "prepublishOnly": "npm run lint && npm run typecheck && npm run build",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.12.1",
-    "@types/uuid": "^10.0.0",
-    "neverthrow": "^8.1.1",
-    "uuid": "^11.1.0",
-    "zod-to-json-schema": "^3.24.5"
+    "@modelcontextprotocol/sdk": "1.15.1",
+    "neverthrow": "^8.2.0",
+    "zod": "^3.24.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
+    "@vitest/ui": "^3.2.3",
     "eslint": "^9.18.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.3"
   },
   "author": "yoda keisuke",
-  "keywords": [
-    "mcp",
-    "agent",
-    "ai",
-    "claude",
-    "cursor"
-  ],
-  "license": "MIT"
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

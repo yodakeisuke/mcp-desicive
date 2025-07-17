@@ -1,92 +1,107 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with this MCP server codebase.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Commands
+## Repository Overview
 
-### Development
-- `npm run dev` - Run MCP server with hot reloading
-- `npm run build` - Compile TypeScript to dist/
-- `npm run start` - Run compiled MCP server
-- `npm run lint` - Run ESLint
-- `npm run typecheck` - Type check without emit
+This is a minimal MCP (Model Context Protocol) server template designed for rapid development with AI assistance. It provides a pre-organized structure with complete patterns for building MCP tools with structured output support.
 
-### Testing & Validation
-Always run before considering work complete:
-- `npm run lint` && `npm run typecheck` && `npm run build`
-
-## Core Philosophy
-
-**Process-Centric Worldview**: "世界はモノの集まりではなく、プロセス（関係）の網である"
-
-### Architectural Principles
-1. **Event-Centric Domain Driven Design** - Commands produce events, not side effects
-2. **Functional Domain Modeling** - Complete rejection of class-based OOP
-3. **Ubiquitous Language Mapping** - Code as domain knowledge documentation
-4. **One Business Rule = One Function** - Compose complex rules from simple ones
-
-### Domain Structure
-```
-src/domain/
-├── command/          # Commands that produce events (業務フロー)
-├── read/             # Read models/projections (ビュー)
-└── term/             # Domain vocabulary (ドメイン語彙)
-```
-#### term の種類
-```
-term = 
-   operation  # Business procedures (業務手順)
-   | resource    # Business resources (業務資源)  
-   | policy      # Business policies (業務ポリシー)
-   | value       # Value objects (値)
-```
-
-## Domain Mapping
-- 以下に、ドメイン集約とドメイン語彙のテンプレートを示す。
-  - `.claude/template/term`
-  - `.claude/template/aggregate`
-
-## Implementation Rules
-
-### Type System
-- **ADTs with Tagged Unions**: `type Status = { type: 'Active' } | { type: 'Inactive' }`
-- **Branded Types**: `type UserId = ID<'User'>` with smart constructors
-- **Exhaustive Matching**: `default: throw new Error(value satisfies never)`
-
-### Error Handling
-- **Never throw exceptions** - Use `neverthrow` Result types
-- **Native neverthrow usage**: Use `ResultAsync` instead of `Promise<Result>`
-- **Function Composition**: Chain with `.andThen()`, `.combine()`, `.mapErr()`
-- **Strict composition rule**: All logic MUST be function composition (sequential or parallel)
-- **No imperative control flow**: Avoid if/else, try/catch, loops in favor of monadic composition
-
-### Domain Rules
-- **No Zod in domain layer** - Only at API boundaries
-- **No barrel exports** - Direct imports: `import { PrTask } from '../term/task/prTask.js'`
-- **Pure domain operations** - Side effects only in infrastructure layer
-- **eDSL composition** - Monadic (sequential) and Applicative (parallel)
-
-### Key Domain Concepts
-- **PrTask**: Work unit with status transitions (Investigation → InProgress → Review → Done)
-- **Plan**: Aggregate organizing tasks for maximum parallelism
-- **Line**: Feature branch with parallelism analysis
-
-## Product Context
-
-MCP server orchestrating multiple AI coding agents working in parallel on different features/branches. Provides "one map" visibility and prevents conflicts through intelligent dependency analysis.
-
-## Git Worktree for Parallel Tasks
+## Development Commands
 
 ```bash
-# Create dedicated worktree for each task
-git worktree add ../<task-dir> <branch-name>
-cd ../<task-dir> && claude
+# Install dependencies
+npm install
 
-# Clean up when done  
-git worktree remove ../<task-dir>
+# Development (with hot reload)
+npm run dev
+
+# Build TypeScript to JavaScript
+npm run build
+
+# Start compiled server
+npm run start
+
+# Type checking (without build)
+npm run typecheck
+
+# Run tests
+npm run test
+
+# Run tests with UI
+npm run test:ui
+
+# Lint code
+npm run lint
 ```
 
-## Memories
-- Delete unnecessary comments
-- Never leave legacy code for backward compatibility
-- Keep codebase clean and minimal
+## Architecture
+
+### Layered Architecture
+
+The codebase follows a clean architecture pattern with three main layers:
+
+1. **MCP Layer** (`src/mcp/`)
+   - Handles external communication via Model Context Protocol
+   - Tools expose domain operations to AI agents
+   - Implements structured output format for both text and data responses
+
+2. **Domain Layer** (`src/domain/`) - Optional but recommended for complex logic
+   - `command/`: Command aggregates that produce events
+   - `read/`: Read models for queries  
+   - `term/`: Shared domain types and value objects
+
+3. **Effect Layer** (`src/effect/`) - Optional for side effects
+   - Storage operations, external API calls, etc.
+
+### MCP Tool Pattern
+
+All MCP tools follow this structure:
+- `schema.ts`: Zod schemas for input validation and output typing
+- `handler.ts`: Business logic orchestration using Result types
+- `index.ts`: Tool export with name, description, schemas, and handler
+
+Tools must be registered in `src/mcp/Server.ts` using `server.registerTool()` for structured output support.
+
+### Structured Output
+
+Tools implement MCP's structured output format:
+- Return both human-readable text and machine-parseable data
+- Use `toStructuredCallToolResult()` utility from `src/mcp/tool/util.ts`
+- Output schema defined using Zod for validation
+
+### Error Handling
+
+The template uses `neverthrow` for functional error handling:
+- All operations return `Result<T, E>` or `ResultAsync<T, E>`
+- Chain operations with `.andThen()`, `.map()`, `.mapErr()`
+- Handle final results with `.match(onSuccess, onError)`
+
+## Key Implementation Patterns
+
+### Creating a New Tool
+
+1. Create directory: `src/mcp/tool/your-tool/`
+2. Define schemas with Zod (input and output)
+3. Implement handler with error handling
+4. Export tool definition with outputSchema
+5. Register in Server.ts
+
+### Domain Integration
+
+When implementing domain logic:
+- Commands validate and produce events
+- Read models query and transform data
+- Effects handle side effects with Result types
+
+## Reference Documentation
+
+- **MCP Tool Guide**: `src/mcp/tool/CLAUDE.md` - Detailed patterns for tool implementation
+- **Example Tool**: `src/mcp/tool/example/` - Working example with structured output
+- **Sample Code**: `src/mcp/tool/_sample-code/` - Minimal implementation examples
+
+## Important Notes
+
+- This is an ESM project (`"type": "module"` in package.json)
+- TypeScript target is ES2022 with NodeNext modules
+- Minimum Node.js version is 18.0.0
+- All imports must include `.js` extension for ESM compatibility

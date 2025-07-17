@@ -1,0 +1,48 @@
+# Source files
+src/
+*.ts
+!dist/**/*.d.ts
+tsconfig.json
+vitest.config.ts
+
+# Development
+.claude/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Build artifacts (keep only what's needed)
+human-ui/src/
+human-ui/node_modules/
+human-ui/package*.json
+human-ui/tsconfig*.json
+human-ui/vite.config.ts
+
+# Documentation source (keep built version)
+product_context/
+
+# Data files
+data/
