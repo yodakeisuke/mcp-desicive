@@ -70,6 +70,7 @@ export const toolHandler = (args: ToolParams): Promise<CallToolResult> => {
 ```typescript
 export const tool = {
   name: 'tool-name',
+  title: 'Tool Display Name',  // Human-friendly display name
   description: toolDescription,
   parameters: toolParams,
   outputSchema: outputSchema,  // Enable structured output
@@ -84,6 +85,7 @@ export const tool = {
 tools.forEach(tool => {
   if ('outputSchema' in tool && tool.outputSchema) {
     server.registerTool(tool.name, {
+      title: tool.title,  // Display name for UI
       description: tool.description,
       inputSchema: tool.parameters,
       outputSchema: tool.outputSchema.shape,
