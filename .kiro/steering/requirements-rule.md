@@ -35,13 +35,14 @@ The highest-level specifications that describe complete user workflows and exper
 ```
 
 ### 2. Tool Definitions (ツール定義)
-Specifications for prompts, tools, and sampling mechanisms that implement the user stories.
+Specifications for MCP tools, prompts, and domain operations that implement the user stories.
 
 **Characteristics:**
-- Defines specific MCP tools, prompts, or sampling strategies
+- Defines specific MCP tools with structured output support
 - References glossary terms for domain concepts
-- Includes input/output schemas and behavior specifications
+- Includes Zod schemas for input/output validation
 - Maps to user stories they support
+- Integrates with domain layer operations
 
 **Structure:**
 ```markdown
@@ -51,27 +52,47 @@ Specifications for prompts, tools, and sampling mechanisms that implement the us
 [What this tool accomplishes and which user stories it supports]
 
 ### Type
-- [ ] Prompt
-- [ ] Tool  
-- [ ] Sampling
+- [ ] MCP Tool (with structured output)
+- [ ] Prompt Definition
+- [ ] Domain Operation
+
+### Architecture Integration
+- **Domain Layer**: [which command/read models it uses]
+- **Effect Layer**: [side effects it triggers]
+- **Error Handling**: [Result type patterns]
 
 ### Specification
-**Input Schema:**
+**Input Schema (Zod):**
 ```typescript
-// Input type definition
+const inputSchema = z.object({
+  // Input validation schema
+});
 ```
 
-**Output Schema:**
+**Output Schema (Zod):**
 ```typescript
-// Output type definition
+const outputSchema = z.object({
+  // Structured output schema
+});
+```
+
+**Handler Pattern:**
+```typescript
+export const handler = (args: InputType): Promise<CallToolResult> => {
+  return domainOperation(args)
+    .match(
+      data => toStructuredCallToolResult(messages, data, false),
+      error => toCallToolResult([error.message], true)
+    );
+};
 ```
 
 **Behavior:**
 - WHEN [input condition] THEN [tool behavior]
-- IF [error condition] THEN [error handling]
+- IF [error condition] THEN [error handling with Result types]
 
 ### Referenced Terms
-- [term]: [how this tool uses the term]
+- [term]: [how this tool uses the term from domain vocabulary]
 
 ### Supported User Stories
 - [story-name]: [how this tool supports the story]
@@ -85,6 +106,7 @@ Domain vocabulary and concept definitions used throughout the system.
 - Provides precise definitions to ensure consistent usage
 - Referenced by both user stories and tool definitions
 - Includes relationships between terms
+- Follows domain type classification system
 
 **Structure:**
 ```markdown
@@ -93,13 +115,17 @@ Domain vocabulary and concept definitions used throughout the system.
 ### Definition
 [Precise definition of the concept]
 
-### Type
-- [ ] Business Operation (eDSL)
-- [ ] Business Resource
-- [ ] Business Policy
-- [ ] Value Object
-- [ ] Domain Event
-- [ ] Aggregate
+### Domain Type Classification
+- [ ] **operation** (業務手順) - Business procedures and workflows
+- [ ] **resource** (業務資源) - Business resources and entities  
+- [ ] **policy** (業務ポリシー) - Business policies and rules
+- [ ] **value** (値) - Value objects and identifiers
+
+### Architecture Layer
+- [ ] Command Model (Aggregate)
+- [ ] Read Model (View/Projection)
+- [ ] MCP Tool Interface
+- [ ] Effect Layer (Side Effects)
 
 ### Properties
 - **[property-name]**: [description]
@@ -109,9 +135,10 @@ Domain vocabulary and concept definitions used throughout the system.
 - **Used by**: [tools that use this term]
 - **Appears in**: [user stories that reference this term]
 
-### Examples
+### Implementation Pattern
 ```typescript
-// Code example showing usage
+// Code example showing usage pattern
+// Include branded types, smart constructors, validation
 ```
 ```
 
