@@ -1,21 +1,48 @@
-# mcp‑worktree — Product Requirements Document (Draft v0.1)
+# mcp-worktree — Product Requirements Document (Draft v0.4)
 
 ## 1. 背景 / Context
+AI Agentがそのまま意思決定を行なっても、意思決定プロセスの質は担保されない。
+ここで、AI Agentに、質の高い意思決定の方法を知らせ、それに沿うことを強制する方法が必要となる。
 
 ## 2. 目的 / Goal
+WRAP フレームワークを Model Context Protocol(MCP) としてAgent向けに提供する。
+prompt/tool/sampling の使用を通じて、Agentが質の高い意思決定を行わざるを得ないレールを敷く。
 
 ## 3. 対象ユーザー / Target Users
+- AI エージェント（MCP クライアント）
 
 ## 4. 課題 / Problem Statement
+1. 選択肢が狭くなりがちで、OR 思考に陥る
+2. 自分の仮説を裏付ける情報ばかり集めてしまう
+3. 感情に流され長期視点を欠く
+4. 楽観的見積りでリスクを見落とす
+これらの意思決定にかかる一般の課題は、AI Agentも陥る。
+特に、Agent は一般的発想、思考手順に陥り狩りであり、広く発散した思考や、鋭い意思決定を行うことができない。
+意思決定プロセスを矯正するフレームワークが必要とされる。
 
 ## 5. ソリューション概要 / Solution Overview
+"mcp-decisive" は WRAP を ツールセットとプロンプトセットに分解し、MCP サーバとして提供する。
+- 提供するtoolは WRAP の４つをそのまま公開するとは限らない。ここは設計が必要
+各「意思決定の道具箱」は MCP 経由で呼び出し可能だが、Agentは問題状況に応じてステップを任意の順序で実行・再実行できるインターリーブ型フローを採用。
+
 
 ## 6. MCP Tool 定義（最小コア）
 
 ### Prompt 定義
+Prompt は意思決定プロセスを起動する役割を持つ。
+Prompt は、AI Agent が使用するものではない。人間の操作で発火するものだ。
+- /identify-the-issue
+   - まず、WRAPプロセスで意思決定すべき対象のイシューを定義します。Agentが、ユーザに課題をヒアリングするためのプロンプトが含まれる。
+   - ヒアリング結果はtool「defineIssue」で登録される
 
 ### Tool 定義
+意思決定エキスパートが実際に用いる思考操作を **“道具箱”** として MCP ツールに落とし込む。WRAP の 4 ステップは上位カテゴリであり、公開 API は下記のような *粒度の細かいツール* を組み合わせて実現する。
 
-### sampling 定義
 
-### resource 定義
+## 7. 保存データ定義
+### state
+- workflow state
+- 思考・アクション履歴
+### データ
+- 課題
+- 選択肢
