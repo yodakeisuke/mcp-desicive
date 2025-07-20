@@ -2,33 +2,33 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { OptionSelectionAggregate } from '../../../domain/command/option-selection.js';
 import { Values } from '../../../domain/term/option.js';
 import { toStructuredCallToolResult, toCallToolResult } from '../util.js';
-import type { GenerateOptionsParams, GenerateOptionsResponse } from './schema.js';
+import { SUCCESS_MESSAGE_TEMPLATE, ERROR_MESSAGE_PREFIX, processTemplate } from './prompt.js';
+import type { RegisterOptionsParams, RegisterOptionsResponse } from './schema.js';
 
-export const generateOptionsHandler = async (args: GenerateOptionsParams): Promise<CallToolResult> => {
-  const result = OptionSelectionAggregate.generateOptions({
-    context: args.context,
-    criteria: args.criteria
+export const registerOptionsHandler = async (args: RegisterOptionsParams): Promise<CallToolResult> => {
+  const result = OptionSelectionAggregate.registerOptions({
+    options: args.options
   });
 
   return result.match(
     (event) => {
       const options = event.optionList.options.map(option => ({
         id: Values.OptionId.toString(option.id),
-        title: option.title,
-        description: option.description
+        text: Values.OptionText.toString(option.text)
       }));
 
-      const response: GenerateOptionsResponse = {
-        options,
-        context: args.context,
-        timestamp: new Date().toISOString()
+      const response: RegisterOptionsResponse = {
+        options
       };
 
       const optionsList = options
-        .map((opt, idx) => `${idx + 1}. **${opt.title}**\n   ${opt.description}`)
-        .join('\n\n');
+        .map((opt, idx) => `${idx + 1}. ${opt.text}`)
+        .join('\n');
 
-      const successMessage = `✅ Generated ${options.length} options for: "${args.context}"\n\n${optionsList}`;
+      const successMessage = processTemplate(SUCCESS_MESSAGE_TEMPLATE, {
+        count: options.length,
+        optionsList: optionsList
+      });
 
       return toStructuredCallToolResult(
         [successMessage],
@@ -38,7 +38,7 @@ export const generateOptionsHandler = async (args: GenerateOptionsParams): Promi
     },
     (error) => {
       const errorMessage = OptionSelectionAggregate.toErrorMessage(error);
-      return toCallToolResult([`❌ ${errorMessage}`], true);
+      return toCallToolResult([`${ERROR_MESSAGE_PREFIX}${errorMessage}`], true);
     }
   );
 };

@@ -1,22 +1,21 @@
 import { z } from 'zod';
 
 // Input schema
-export const generateOptionsSchema = z.object({
-  context: z.string().min(1).describe("Context or problem statement for which options should be generated"),
-  criteria: z.string().optional().describe("Optional criteria to filter or guide option generation")
+export const registerOptionsSchema = z.object({
+  options: z.array(z.string().max(30, "各選択肢は30文字以内で入力してください"))
+    .min(3, "選択肢は3個以上で入力してください")
+    .max(5, "選択肢は5個以下で入力してください")
+    .describe("選択肢のリスト（各項目30文字まで、3-5個）")
 });
 
 // Output schema
-export const generateOptionsOutputSchema = z.object({
+export const registerOptionsOutputSchema = z.object({
   options: z.array(z.object({
-    id: z.string().describe("Unique identifier for the option"),
-    title: z.string().describe("Brief title of the option"),
-    description: z.string().describe("Detailed description of the option")
-  })).min(3).max(5).describe("Generated options (3-5 items)"),
-  context: z.string().describe("Original context that was processed"),
-  timestamp: z.string().describe("Generation timestamp")
+    id: z.string().describe("選択肢の一意識別子"),
+    text: z.string().describe("選択肢のテキスト")
+  })).min(3).max(5).describe("登録された選択肢（3-5個）")
 });
 
-export type GenerateOptionsParams = z.infer<typeof generateOptionsSchema>;
-export const generateOptionsParams = generateOptionsSchema.shape;
-export type GenerateOptionsResponse = z.infer<typeof generateOptionsOutputSchema>;
+export type RegisterOptionsParams = z.infer<typeof registerOptionsSchema>;
+export const registerOptionsParams = registerOptionsSchema.shape;
+export type RegisterOptionsResponse = z.infer<typeof registerOptionsOutputSchema>;

@@ -45,33 +45,20 @@ const OptionId = {
 } as const;
 
 /**
- * 語彙「OptionTitle」
+ * 語彙「OptionText」
  * domain type: value
+ * 
+ * 選択肢の文字列（30文字まで）
  */
-type OptionTitle = string & { readonly _brand: 'OptionTitle' };
+type OptionText = string & { readonly _brand: 'OptionText' };
 
-const OptionTitle = {
-  create: (value: string): Result<OptionTitle, ValidationError[]> => {
-    const errors = validateOptionTitle(value);
-    return errors.length > 0 ? err(errors) : ok(value.trim() as OptionTitle);
+const OptionText = {
+  create: (value: string): Result<OptionText, ValidationError[]> => {
+    const errors = validateOptionText(value);
+    return errors.length > 0 ? err(errors) : ok(value.trim() as OptionText);
   },
   
-  toString: (title: OptionTitle): string => title
-} as const;
-
-/**
- * 語彙「OptionDescription」
- * domain type: value
- */
-type OptionDescription = string & { readonly _brand: 'OptionDescription' };
-
-const OptionDescription = {
-  create: (value: string): Result<OptionDescription, ValidationError[]> => {
-    const errors = validateOptionDescription(value);
-    return errors.length > 0 ? err(errors) : ok(value.trim() as OptionDescription);
-  },
-  
-  toString: (description: OptionDescription): string => description
+  toString: (text: OptionText): string => text
 } as const;
 
 /**
@@ -80,13 +67,11 @@ const OptionDescription = {
  */
 type Option = {
   readonly id: OptionId;
-  readonly title: OptionTitle;
-  readonly description: OptionDescription;
+  readonly text: OptionText;
 };
 
 type RequestedOption = {
-  title: string;
-  description: string;
+  text: string;
 };
 
 /**
@@ -136,23 +121,16 @@ type ConstructOptionList = (params: RequestedOptionList) => Result<OptionList, O
 
 // Smart constructor for Option
 const constructOption: ConstructOption = (params) =>
-  OptionTitle.create(params.title)
-    .andThen(title =>
-      OptionDescription.create(params.description)
-        .andThen(description => {
-          const option: Option = {
-            id: OptionId.generate(),
-            title,
-            description
-          };
-          return ok(option);
-        })
-        .mapErr(errors => errors.map(e => 
-          OptionError.create('OptionCreationFailed', `Description validation failed: ${e.message}`)
-        ))
-    )
+  OptionText.create(params.text)
+    .andThen(text => {
+      const option: Option = {
+        id: OptionId.generate(),
+        text
+      };
+      return ok(option);
+    })
     .mapErr(errors => errors.map(e => 
-      OptionError.create('OptionCreationFailed', `Title validation failed: ${e.message}`)
+      OptionError.create('OptionCreationFailed', `Text validation failed: ${e.message}`)
     ));
 
 // Smart constructor for OptionList with business rule enforcement
@@ -212,28 +190,12 @@ const validateOptionId = (value: string): ValidationError[] => {
   return [];
 };
 
-const validateOptionTitle = (value: string): ValidationError[] => {
+const validateOptionText = (value: string): ValidationError[] => {
   if (!value || value.trim().length === 0) {
-    return [ValidationError.create('required', 'title', 'Option title is required')];
+    return [ValidationError.create('required', 'text', '選択肢は必須です')];
   }
-  if (value.length < 2) {
-    return [ValidationError.create('too_short', 'title', 'Option title must be at least 2 characters')];
-  }
-  if (value.length > 50) {
-    return [ValidationError.create('too_long', 'title', 'Option title must be 50 characters or less')];
-  }
-  return [];
-};
-
-const validateOptionDescription = (value: string): ValidationError[] => {
-  if (!value || value.trim().length === 0) {
-    return [ValidationError.create('required', 'description', 'Option description is required')];
-  }
-  if (value.length < 5) {
-    return [ValidationError.create('too_short', 'description', 'Option description must be at least 5 characters')];
-  }
-  if (value.length > 200) {
-    return [ValidationError.create('too_long', 'description', 'Option description must be 200 characters or less')];
+  if (value.length > 30) {
+    return [ValidationError.create('too_long', 'text', '選択肢は30文字以内で入力してください')];
   }
   return [];
 };
@@ -288,8 +250,7 @@ export const OptionListModel = {
  */
 export const Values = {
   OptionId,
-  OptionTitle,
-  OptionDescription
+  OptionText
 } as const;
 
 /**
@@ -301,8 +262,7 @@ export type {
   OptionList,
   RequestedOptionList,
   OptionId,
-  OptionTitle,
-  OptionDescription,
+  OptionText,
   ValidationError,
   OptionError,
   OptionListError

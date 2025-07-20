@@ -17,17 +17,16 @@ type OptionsGenerated = Extract<OptionSelectionEvent, { type: 'OptionsGenerated'
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Commands are pure functions that produce events or errors
-type GenerateOptionsCommand = (
-  request: GenerateOptionsRequest
+type RegisterOptionsCommand = (
+  request: RegisterOptionsRequest
 ) => Result<OptionsGenerated, OptionSelectionError>;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Request/Error Types - Input and failure modeling
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-type GenerateOptionsRequest = {
-  context: string;
-  criteria?: string;
+type RegisterOptionsRequest = {
+  options: string[];
 };
 
 // Tagged union for exhaustive error handling
@@ -40,64 +39,24 @@ type OptionSelectionError =
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Business rule: Validate request
-const validateGenerateRequest = (
-  request: GenerateOptionsRequest
-): Result<GenerateOptionsRequest, OptionSelectionError> => {
-  if (request.context.trim().length === 0) {
+const validateRegisterRequest = (
+  request: RegisterOptionsRequest
+): Result<RegisterOptionsRequest, OptionSelectionError> => {
+  if (!request.options || request.options.length === 0) {
     return err({
       type: 'ValidationFailed',
-      reason: 'Context cannot be empty'
+      reason: 'Options list cannot be empty'
     });
   }
   
   return ok(request);
 };
 
-// Business rule: Generate options based on context using term models
-const generateOptionList = (request: GenerateOptionsRequest): Result<OptionList, OptionSelectionError> => {
-  // For now, generate placeholder options
-  // In real implementation, this would use AI or predefined logic
-  const baseOptions = [
-    {
-      title: "Option A",
-      description: `Solution approach A for: ${request.context}`
-    },
-    {
-      title: "Option B", 
-      description: `Solution approach B for: ${request.context}`
-    },
-    {
-      title: "Option C",
-      description: `Solution approach C for: ${request.context}`
-    },
-    {
-      title: "Option D",
-      description: `Solution approach D for: ${request.context}`
-    }
-  ];
-
-  // Apply criteria if provided
-  const filteredOptions = request.criteria 
-    ? baseOptions.filter(opt => 
-        opt.description.toLowerCase().includes(request.criteria!.toLowerCase())
-      )
-    : baseOptions;
-
-  // Ensure we have 3-5 options (business rule)
-  const finalOptions = filteredOptions.slice(0, 5);
-  if (finalOptions.length < 3) {
-    // Pad with additional generic options to meet minimum
-    while (finalOptions.length < 3) {
-      finalOptions.push({
-        title: `Additional Option ${finalOptions.length + 1}`,
-        description: `Additional solution for: ${request.context}`
-      });
-    }
-  }
-
+// Business rule: Register options directly using term models
+const registerOptionList = (request: RegisterOptionsRequest): Result<OptionList, OptionSelectionError> => {
   // Use term model to create properly validated OptionList
   const requestedOptionList: RequestedOptionList = {
-    options: finalOptions
+    options: request.options.map(text => ({ text }))
   };
 
   return OptionListModel.create(requestedOptionList)
@@ -108,10 +67,10 @@ const generateOptionList = (request: GenerateOptionsRequest): Result<OptionList,
 };
 
 // Command implementation using functional composition
-const generateOptionsCommand: GenerateOptionsCommand = (request) =>
-  validateGenerateRequest(request)
+const registerOptionsCommand: RegisterOptionsCommand = (request) =>
+  validateRegisterRequest(request)
     .andThen(validRequest => 
-      generateOptionList(validRequest)
+      registerOptionList(validRequest)
         .andThen(optionList => {
           const event: OptionsGenerated = {
             type: 'OptionsGenerated',
@@ -155,13 +114,13 @@ const OptionSelectionErrorHandler = {
 /**
  * Option Selection Aggregate - The public interface for option selection commands
  * 
- * @command generateOptions - Generate 3-5 options based on context
+ * @command registerOptions - Register 3-5 options directly
  * @utility toErrorMessage - Convert errors to user-friendly strings
  */
 export const OptionSelectionAggregate = {
-  generateOptions: generateOptionsCommand,
+  registerOptions: registerOptionsCommand,
   toErrorMessage: OptionSelectionErrorHandler.toString,
 } as const;
 
 // Export types for other layers
-export type { OptionsGenerated, GenerateOptionsRequest, OptionSelectionError };
+export type { OptionsGenerated, RegisterOptionsRequest, OptionSelectionError };

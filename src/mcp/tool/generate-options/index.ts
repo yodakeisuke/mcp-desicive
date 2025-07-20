@@ -1,19 +1,11 @@
-import { generateOptionsParams, generateOptionsOutputSchema } from './schema.js';
-import { generateOptionsHandler } from './handler.js';
+import { registerOptionsParams, registerOptionsOutputSchema } from './schema.js';
+import { registerOptionsHandler } from './handler.js';
+import { TOOL_DESCRIPTION } from './prompt.js';
 
-const toolDescription = `Generate 3-5 options based on the provided context.
-
-This tool helps with decision-making by providing multiple structured options for a given situation or problem. The tool enforces business rules ensuring exactly 3-5 options are always generated.
-
-Usage examples:
-- "What should I have for lunch today?"
-- "How can I improve my team's productivity?"
-- "What are the approaches to solve this technical problem?"`;
-
-export const generateOptionsTool = {
-  name: 'generate-options',
-  description: toolDescription,
-  parameters: generateOptionsParams,
-  outputSchema: generateOptionsOutputSchema,
-  handler: generateOptionsHandler
+export const registerOptionsTool = {
+  name: 'register-options',
+  description: TOOL_DESCRIPTION,
+  parameters: registerOptionsParams,
+  outputSchema: registerOptionsOutputSchema,
+  handler: registerOptionsHandler
 };
