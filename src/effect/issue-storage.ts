@@ -1,7 +1,7 @@
 import { Result } from 'neverthrow';
 import path from 'path';
 import { getDataDirectory, saveJsonFile, readJsonFile, fileExists, FileSystemError } from './filesystem.js';
-import { IssueDefinition } from '../mcp/tool/define-issue/schema.js';
+import { IssueDefinition } from '../domain/command/define-issue.js';
 
 /**
  * Get the issue file path
@@ -13,9 +13,14 @@ export const getIssueFilePath = (): string => {
 /**
  * Save issue definition to JSON file
  */
-export const saveIssueDefinition = async (issueData: IssueDefinition): Promise<Result<void, FileSystemError>> => {
+export const saveIssueDefinition = async (issueDefinition: IssueDefinition): Promise<Result<void, FileSystemError>> => {
   const filePath = getIssueFilePath();
-  return saveJsonFile(filePath, issueData);
+  const serializable = {
+    issue: issueDefinition.issue,
+    context: issueDefinition.context,
+    constraints: issueDefinition.constraints
+  };
+  return saveJsonFile(filePath, serializable);
 };
 
 /**

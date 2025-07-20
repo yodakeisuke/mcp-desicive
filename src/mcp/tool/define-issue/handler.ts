@@ -1,13 +1,9 @@
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { Result, ok, err } from 'neverthrow';
-import { ZodError } from 'zod';
-import { DefineIssueParams, DefineIssueResponse, IssueDefinition, defineIssueSchema } from './schema.js';
+import { DefineIssueParams, DefineIssueResponse, defineIssueSchema } from './schema.js';
 import { toStructuredCallToolResult } from '../util.js';
 import { saveIssueDefinition, FileSystemError } from '../../../effect/index.js';
+import { IssueDefinitionAggregate, DefineIssueRequest, IssueDefinitionError } from '../../../domain/command/define-issue.js';
 
-/**
- * Generate success response with next action guidance
- */
 const generateSuccessResponse = (issue: string): CallToolResult => {
   const structuredData: DefineIssueResponse = { issue };
   const nextActionGuidance =
@@ -24,99 +20,19 @@ const generateSuccessResponse = (issue: string): CallToolResult => {
   );
 };
 
-/**
- * Validation error types for better error handling
- */
-interface ValidationError {
-  field: string;
-  message: string;
-  code: 'required' | 'too_short' | 'too_long' | 'invalid_type';
-}
-
-/**
- * Parse Zod validation errors into structured format
- */
-const parseValidationErrors = (zodError: ZodError): ValidationError[] => {
-  return zodError.errors.map(error => {
-    const field = error.path.join('.');
-    let code: ValidationError['code'] = 'invalid_type';
-
-    switch (error.code) {
-      case 'too_small':
-        code = error.minimum === 1 ? 'required' : 'too_short';
-        break;
-      case 'too_big':
-        code = 'too_long';
-        break;
-      case 'invalid_type':
-        code = 'invalid_type';
-        break;
-    }
-
-    return {
-      field,
-      message: error.message,
-      code
-    };
-  });
-};
-
-/**
- * Validate input parameters using Zod schema with detailed error handling
- */
-const validateInput = (args: unknown): Result<DefineIssueParams, ValidationError[]> => {
-  const result = defineIssueSchema.safeParse(args);
-
-  if (result.success) {
-    return ok(result.data);
-  }
-
-  const validationErrors = parseValidationErrors(result.error);
-  return err(validationErrors);
-};
-
-/**
- * Generate validation error response with specific field guidance
- */
-const generateValidationErrorResponse = (errors: ValidationError[]): CallToolResult => {
-  const errorMessages = errors.map(error => {
-    let specificGuidance = "";
-
-    switch (error.code) {
-      case 'required':
-        specificGuidance = `${error.field}は必須項目です。`;
-        break;
-      case 'too_short':
-        specificGuidance = `${error.field}は1文字以上で入力してください。`;
-        break;
-      case 'too_long':
-        const maxLength = error.field === 'issue' ? '30' : '60';
-        specificGuidance = `${error.field}は${maxLength}文字以内で入力してください。`;
-        break;
-      case 'invalid_type':
-        specificGuidance = `${error.field}は文字列で入力してください。`;
-        break;
-    }
-
-    return `${error.message} ${specificGuidance}`;
-  });
-
-  const correctionGuidance = "以下の項目を修正して再実行してください：\n" +
-    errorMessages.map(msg => `• ${msg}`).join('\n');
-
+const generateDomainErrorResponse = (error: IssueDefinitionError): CallToolResult => {
+  const errorMessage = IssueDefinitionAggregate.toErrorMessage(error);
+  
   return toStructuredCallToolResult(
     [
-      "入力検証エラーが発生しました。",
-      correctionGuidance
+      "ドメインエラーが発生しました。",
+      errorMessage
     ],
     null,
     true
   );
 };
 
-/**
- * Generate file system error response with specific correction guidance
- */
 const generateFileSystemErrorResponse = (fsError: FileSystemError): CallToolResult => {
   let correctionGuidance: string;
 
@@ -168,30 +84,61 @@ const generateFileSystemErrorResponse = (fsError: FileSystemError): CallToolResu
   );
 };
 
-/**
- * Define issue handler - implements the core business logic
- */
 export const defineIssueHandler = async (args: unknown): Promise<CallToolResult> => {
-  // 1. Input validation using Zod schema with detailed error handling
-  const validationResult = validateInput(args);
-  if (validationResult.isErr()) {
-    return generateValidationErrorResponse(validationResult.error);
+  const zodResult = defineIssueSchema.safeParse(args);
+  if (!zodResult.success) {
+    return toStructuredCallToolResult(["入力パラメータが無効です"], null, true);
   }
 
-  const validatedArgs = validationResult.value;
+  const request: DefineIssueRequest = zodResult.data;
+  const domainResult = IssueDefinitionAggregate.defineIssue(request);
 
-  // Create issue definition data structure
-  const issueData: IssueDefinition = {
-    issue: validatedArgs.issue,
-    context: validatedArgs.context,
-    constraints: validatedArgs.constraints
-  };
+  if (domainResult.isErr()) {
+    // ドメインエラーを詳細なバリデーションエラーとして処理
+    const error = domainResult.error;
+    if (error.type === 'ValidationFailed') {
+      const errorMessages = error.validationErrors.map(validationError => {
+        let specificGuidance = "";
 
-  // Save to local file system using Result type with detailed error handling
-  const saveResult = await saveIssueDefinition(issueData);
+        switch (validationError.type) {
+          case 'required':
+            specificGuidance = `${validationError.field}は必須項目です。`;
+            break;
+          case 'too_short':
+            specificGuidance = `${validationError.field}は1文字以上で入力してください。`;
+            break;
+          case 'too_long':
+            const maxLength = validationError.field === 'issue' ? '30' : '60';
+            specificGuidance = `${validationError.field}は${maxLength}文字以内で入力してください。`;
+            break;
+          case 'invalid_type':
+            specificGuidance = `${validationError.field}は文字列で入力してください。`;
+            break;
+        }
+
+        return `${validationError.message} ${specificGuidance}`;
+      });
+
+      const correctionGuidance = "以下の項目を修正して再実行してください：\n" +
+        errorMessages.map(msg => `• ${msg}`).join('\n');
+
+      return toStructuredCallToolResult(
+        [
+          "入力検証エラーが発生しました。",
+          correctionGuidance
+        ],
+        null,
+        true
+      );
+    }
+    return generateDomainErrorResponse(domainResult.error);
+  }
+
+  const event = domainResult.value;
+  const saveResult = await saveIssueDefinition(event.issueDefinition);
 
   return saveResult.match(
-    () => generateSuccessResponse(validatedArgs.issue),
+    () => generateSuccessResponse(event.issueDefinition.issue),
     (fsError) => generateFileSystemErrorResponse(fsError)
   );
 };
