@@ -2,7 +2,9 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { GetCurrentStatusResponse, getCurrentStatusSchema } from './schema.js';
 import { toStructuredCallToolResult } from '../util.js';
 import { getCurrentIssueStatus, serializeStatusView, formatReadError } from '../../../domain/read/current-status/index.js';
+import { getCurrentOptions, serializeOptionsView, formatOptionsReadError } from '../../../domain/read/options/index.js';
 import type { IssueStatusView, ReadError } from '../../../domain/read/current-status/types.js';
+import type { OptionsView, OptionsReadError } from '../../../domain/read/options/types.js';
 
 /**
  * Get Current Status Tool Handler
@@ -21,29 +23,41 @@ import type { IssueStatusView, ReadError } from '../../../domain/read/current-st
 /**
  * Generate success response when issue exists
  */
-const generateIssueExistsResponse = (statusView: IssueStatusView): CallToolResult => {
+const generateIssueExistsResponse = (statusView: IssueStatusView, optionsView: OptionsView | null): CallToolResult => {
   const serializedView = serializeStatusView(statusView);
+  const serializedOptions = optionsView ? serializeOptionsView(optionsView) : null;
   
-  const nextActionGuidance = 
-    "課題が定義されています。次のアクションを検討してください：\n" +
-    "• Widen Options（選択肢を広げる）- 可能な解決策を洗い出す\n" +
-    "• Reality-Test Assumptions（仮説を現実検証する）- 前提条件を検証する\n" +
-    "• Attain Distance（距離を置いて判断する）- 客観的な視点で評価する\n" +
-    "• Prepare to be Wrong（間違いに備える）- リスクと対策を検討する";
+  const nextActionGuidance = optionsView 
+    ? "課題と選択肢が定義されています。次のアクションを検討してください：\n" +
+      "• Reality-Test Assumptions（仮説を現実検証する）- 前提条件を検証する\n" +
+      "• Attain Distance（距離を置いて判断する）- 客観的な視点で評価する\n" +
+      "• Prepare to be Wrong（間違いに備える）- リスクと対策を検討する"
+    : "課題が定義されています。次のアクションを検討してください：\n" +
+      "• Widen Options（選択肢を広げる）- 可能な解決策を洗い出す\n" +
+      "• Reality-Test Assumptions（仮説を現実検証する）- 前提条件を検証する\n" +
+      "• Attain Distance（距離を置いて判断する）- 客観的な視点で評価する\n" +
+      "• Prepare to be Wrong（間違いに備える）- リスクと対策を検討する";
 
   const structuredData: GetCurrentStatusResponse = {
     currentStatus: {
-      hasIssue: true,
-      issue: serializedView.issue,
-      context: serializedView.context,
-      constraints: serializedView.constraints
+      課題: {
+        issue: serializedView.issue,
+        context: serializedView.context,
+        constraints: serializedView.constraints
+      },
+      選択肢: serializedOptions?.options
     },
     nextActions: nextActionGuidance
   };
 
+  const statusText = `現在の課題: ${serializedView.issue}\n背景: ${serializedView.context}\n制約: ${serializedView.constraints}`;
+  const optionsText = optionsView 
+    ? `\n選択肢: ${serializedOptions?.options.map((opt, idx) => `${idx + 1}. ${opt.text}`).join('\n')}`
+    : '';
+
   return toStructuredCallToolResult(
     [
-      `現在の課題: ${serializedView.issue}\n背景: ${serializedView.context}\n制約: ${serializedView.constraints}`,
+      statusText + optionsText,
       nextActionGuidance
     ],
     structuredData,
@@ -61,9 +75,7 @@ const generateNoIssueResponse = (): CallToolResult => {
     "• define-issue ツールを使用して課題を定義してください";
 
   const structuredData: GetCurrentStatusResponse = {
-    currentStatus: {
-      hasIssue: false
-    },
+    currentStatus: {},
     nextActions: nextActionGuidance
   };
 
@@ -123,7 +135,7 @@ const generateFileSystemErrorResponse = (error: ReadError): CallToolResult => {
  * Get Current Status Handler
  * 
  * MCPクライアントからの現状把握リクエストを処理し、
- * 構造化された出力形式で課題情報を返します。
+ * 構造化された出力形式で課題情報と選択肢情報を返します。
  */
 export const getCurrentStatusHandler = async (args: unknown): Promise<CallToolResult> => {
   // Input validation using Zod schema
@@ -139,22 +151,27 @@ export const getCurrentStatusHandler = async (args: unknown): Promise<CallToolRe
     );
   }
 
-  // Call domain read model to get current status
-  const statusResult = await getCurrentIssueStatus();
+  // Call domain read models to get current status and options
+  const [statusResult, optionsResult] = await Promise.all([
+    getCurrentIssueStatus(),
+    getCurrentOptions()
+  ]);
 
-  return statusResult.match(
-    // Success: Handle both issue exists and no issue cases
-    (statusView) => {
-      if (statusView === null) {
-        // No issue defined - this is a normal state, not an error
-        return generateNoIssueResponse();
-      } else {
-        // Issue exists - return structured issue information
-        return generateIssueExistsResponse(statusView);
-      }
-    },
-    
-    // Error: Handle file system and data corruption errors
-    (error) => generateFileSystemErrorResponse(error)
-  );
+  // Handle issue status errors
+  if (statusResult.isErr()) {
+    return generateFileSystemErrorResponse(statusResult.error);
+  }
+
+  // Handle options errors (but don't fail the entire request)
+  const optionsView = optionsResult.isOk() ? optionsResult.value : null;
+
+  const statusView = statusResult.value;
+  
+  if (statusView === null) {
+    // No issue defined - this is a normal state, not an error
+    return generateNoIssueResponse();
+  } else {
+    // Issue exists - return structured issue information with options
+    return generateIssueExistsResponse(statusView, optionsView);
+  }
 };
