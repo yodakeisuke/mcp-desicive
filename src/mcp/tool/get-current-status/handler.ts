@@ -62,7 +62,9 @@ const generateIssueExistsResponse = async (statusView: IssueStatusView, optionsV
 
   const statusText = `ワークフロー状態: ${getDisplayName(workflowState)}\n現在の課題: ${serializedView.issue}\n背景: ${serializedView.context}\n制約: ${serializedView.constraints}`;
   const optionsText = optionsView 
-    ? `\n選択肢: ${serializedOptions?.options.map((opt, idx) => `${idx + 1}. ${opt.text}`).join('\n')}`
+    ? `\n選択肢: ${serializedOptions?.options.map((opt, idx) => 
+        `${idx + 1}. ${opt.text}${opt.supplementaryInfo ? ` (補足: ${opt.supplementaryInfo})` : ''}`
+      ).join('\n')}`
     : '';
 
   return toStructuredCallToolResult(

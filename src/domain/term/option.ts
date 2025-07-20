@@ -68,10 +68,12 @@ const OptionText = {
 type Option = {
   readonly id: OptionId;
   readonly text: OptionText;
+  readonly supplementaryInfo?: string;
 };
 
 type RequestedOption = {
   text: string;
+  supplementaryInfo?: string;
 };
 
 /**
@@ -125,7 +127,8 @@ const constructOption: ConstructOption = (params) =>
     .andThen(text => {
       const option: Option = {
         id: OptionId.generate(),
-        text
+        text,
+        ...(params.supplementaryInfo && { supplementaryInfo: params.supplementaryInfo })
       };
       return ok(option);
     })

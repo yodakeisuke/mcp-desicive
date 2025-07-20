@@ -23,7 +23,8 @@ export const getCurrentStatusOutputSchema = z.object({
     }).optional().describe("課題情報"),
     選択肢: z.array(z.object({
       id: z.string().describe("選択肢の一意識別子"),
-      text: z.string().describe("選択肢のテキスト")
+      text: z.string().describe("選択肢のテキスト"),
+      supplementaryInfo: z.string().optional().describe("選択肢の補足情報（オプション）")
     })).optional().describe("登録された選択肢")
   }).describe("現在の課題状況"),
   nextActions: z.string().describe("推奨される次のアクション")

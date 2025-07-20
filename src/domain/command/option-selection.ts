@@ -1,5 +1,5 @@
 import { Result, ok, err } from 'neverthrow';
-import { OptionListModel, type Option, type OptionList, type RequestedOptionList, type OptionListError } from '../term/option.js';
+import { OptionListModel, type Option, type OptionList, type RequestedOptionList, type RequestedOption, type OptionListError } from '../term/option.js';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Type Modeling Section
@@ -26,7 +26,7 @@ type RegisterOptionsCommand = (
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 type RegisterOptionsRequest = {
-  options: string[];
+  options: RequestedOption[];
 };
 
 // Tagged union for exhaustive error handling
@@ -56,7 +56,7 @@ const validateRegisterRequest = (
 const registerOptionList = (request: RegisterOptionsRequest): Result<OptionList, OptionSelectionError> => {
   // Use term model to create properly validated OptionList
   const requestedOptionList: RequestedOptionList = {
-    options: request.options.map(text => ({ text }))
+    options: request.options
   };
 
   return OptionListModel.create(requestedOptionList)

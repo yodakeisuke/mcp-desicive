@@ -113,7 +113,8 @@ export const serializeOptionsView = (optionsView: OptionsView) => {
   return {
     options: optionsView.options.map(option => ({
       id: option.id,
-      text: option.text
+      text: option.text,
+      ...(option.supplementaryInfo && { supplementaryInfo: option.supplementaryInfo })
     }))
   };
 };

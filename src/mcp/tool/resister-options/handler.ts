@@ -10,8 +10,20 @@ import { updateState } from '../../../effect/workflow-state-storage.js';
 import { toWorkflowStateType } from '../../../domain/term/widen-options-steps.js';
 
 export const registerOptionsHandler = async (args: RegisterOptionsParams): Promise<CallToolResult> => {
+  // Convert input format to RequestedOption format
+  const requestedOptions = args.options.map(option => {
+    if (typeof option === 'string') {
+      return { text: option };
+    } else {
+      return {
+        text: option.text,
+        ...(option.supplementaryInfo && { supplementaryInfo: option.supplementaryInfo })
+      };
+    }
+  });
+
   const result = OptionSelectionAggregate.registerOptions({
-    options: args.options
+    options: requestedOptions
   });
 
   return result.match(
@@ -74,7 +86,8 @@ export const registerOptionsHandler = async (args: RegisterOptionsParams): Promi
 
       const options = event.optionList.options.map(option => ({
         id: Values.OptionId.toString(option.id),
-        text: Values.OptionText.toString(option.text)
+        text: Values.OptionText.toString(option.text),
+        ...(option.supplementaryInfo && { supplementaryInfo: option.supplementaryInfo })
       }));
 
       // 入力されたWidenOptionsStepを使用
