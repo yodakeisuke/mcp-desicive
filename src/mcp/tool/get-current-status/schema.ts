@@ -9,8 +9,12 @@ import { z } from 'zod';
 // Input schema - パラメータなし（現在の課題情報を単純に取得）
 export const getCurrentStatusSchema = z.object({});
 
-// Output schema - 構造化された課題情報とネクストアクション
+// Output schema - 構造化された課題情報とワークフロー状態
 export const getCurrentStatusOutputSchema = z.object({
+  workflowState: z.object({
+    current: z.string().describe("現在のワークフロー状態"),
+    displayName: z.string().describe("状態の日本語表示名")
+  }).describe("ワークフロー状態"),
   currentStatus: z.object({
     課題: z.object({
       issue: z.string().optional().describe("課題のタイトル"),

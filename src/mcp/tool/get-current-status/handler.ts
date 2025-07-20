@@ -5,6 +5,8 @@ import { getCurrentIssueStatus, serializeStatusView, formatReadError } from '../
 import { getCurrentOptions, serializeOptionsView, formatOptionsReadError } from '../../../domain/read/options/index.js';
 import type { IssueStatusView, ReadError } from '../../../domain/read/current-status/types.js';
 import type { OptionsView, OptionsReadError } from '../../../domain/read/options/types.js';
+import { getCurrentState } from '../../../effect/workflow-state-storage.js';
+import { getDisplayName } from '../../../domain/term/workflow-state.js';
 
 /**
  * Get Current Status Tool Handler
@@ -23,9 +25,13 @@ import type { OptionsView, OptionsReadError } from '../../../domain/read/options
 /**
  * Generate success response when issue exists
  */
-const generateIssueExistsResponse = (statusView: IssueStatusView, optionsView: OptionsView | null): CallToolResult => {
+const generateIssueExistsResponse = async (statusView: IssueStatusView, optionsView: OptionsView | null): Promise<CallToolResult> => {
   const serializedView = serializeStatusView(statusView);
   const serializedOptions = optionsView ? serializeOptionsView(optionsView) : null;
+  
+  // ワークフロー状態を取得
+  const workflowStateResult = await getCurrentState();
+  const workflowState = workflowStateResult.isOk() ? workflowStateResult.value : { type: 'undefined' as const };
   
   const nextActionGuidance = optionsView 
     ? "課題と選択肢が定義されています。次のアクションを検討してください：\n" +
@@ -39,6 +45,10 @@ const generateIssueExistsResponse = (statusView: IssueStatusView, optionsView: O
       "• Prepare to be Wrong（間違いに備える）- リスクと対策を検討する";
 
   const structuredData: GetCurrentStatusResponse = {
+    workflowState: {
+      current: workflowState.type,
+      displayName: getDisplayName(workflowState)
+    },
     currentStatus: {
       課題: {
         issue: serializedView.issue,
@@ -50,7 +60,7 @@ const generateIssueExistsResponse = (statusView: IssueStatusView, optionsView: O
     nextActions: nextActionGuidance
   };
 
-  const statusText = `現在の課題: ${serializedView.issue}\n背景: ${serializedView.context}\n制約: ${serializedView.constraints}`;
+  const statusText = `ワークフロー状態: ${getDisplayName(workflowState)}\n現在の課題: ${serializedView.issue}\n背景: ${serializedView.context}\n制約: ${serializedView.constraints}`;
   const optionsText = optionsView 
     ? `\n選択肢: ${serializedOptions?.options.map((opt, idx) => `${idx + 1}. ${opt.text}`).join('\n')}`
     : '';
@@ -68,20 +78,28 @@ const generateIssueExistsResponse = (statusView: IssueStatusView, optionsView: O
 /**
  * Generate response when no issue is defined (not an error)
  */
-const generateNoIssueResponse = (): CallToolResult => {
+const generateNoIssueResponse = async (): Promise<CallToolResult> => {
+  // ワークフロー状態を取得
+  const workflowStateResult = await getCurrentState();
+  const workflowState = workflowStateResult.isOk() ? workflowStateResult.value : { type: 'undefined' as const };
+  
   const nextActionGuidance = 
     "まだ課題が定義されていません。WRAPプロセスを開始するために：\n" +
     "• identify-issue プロンプトを使用して課題を特定してください\n" +
     "• define-issue ツールを使用して課題を定義してください";
 
   const structuredData: GetCurrentStatusResponse = {
+    workflowState: {
+      current: workflowState.type,
+      displayName: getDisplayName(workflowState)
+    },
     currentStatus: {},
     nextActions: nextActionGuidance
   };
 
   return toStructuredCallToolResult(
     [
-      "現在、課題は定義されていません。",
+      `ワークフロー状態: ${getDisplayName(workflowState)}\n現在、課題は定義されていません。`,
       nextActionGuidance
     ],
     structuredData,
@@ -169,9 +187,9 @@ export const getCurrentStatusHandler = async (args: unknown): Promise<CallToolRe
   
   if (statusView === null) {
     // No issue defined - this is a normal state, not an error
-    return generateNoIssueResponse();
+    return await generateNoIssueResponse();
   } else {
     // Issue exists - return structured issue information with options
-    return generateIssueExistsResponse(statusView, optionsView);
+    return await generateIssueExistsResponse(statusView, optionsView);
   }
 };

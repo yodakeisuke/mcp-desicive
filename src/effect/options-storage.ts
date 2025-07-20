@@ -1,7 +1,7 @@
 import { Result, ok, err } from 'neverthrow';
-import { join } from 'path';
+import path from 'path';
 import type { OptionList } from '../domain/term/option.js';
-import { saveJsonFile, readJsonFile, type FileSystemError } from './filesystem.js';
+import { saveJsonFile, readJsonFile, getDataDirectory, type FileSystemError } from './filesystem.js';
 
 /**
  * Options Storage Effect Layer
@@ -9,10 +9,6 @@ import { saveJsonFile, readJsonFile, type FileSystemError } from './filesystem.j
  * Handles persistence of options to the file system.
  * Uses similar patterns to issue-storage.ts for consistency.
  */
-
-// Configuration
-const STORAGE_DIR = '.mcp-decisive';
-const OPTIONS_FILENAME = 'options.json';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Storage Operations
@@ -22,7 +18,7 @@ const OPTIONS_FILENAME = 'options.json';
  * Get the full path to the options file
  */
 const getOptionsFilePath = (): string => {
-  return join(process.cwd(), STORAGE_DIR, OPTIONS_FILENAME);
+  return path.join(getDataDirectory(), 'options.json');
 };
 
 /**

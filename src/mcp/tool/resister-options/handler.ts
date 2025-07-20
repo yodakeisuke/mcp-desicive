@@ -5,6 +5,8 @@ import { saveOptions } from '../../../effect/options-storage.js';
 import { toStructuredCallToolResult, toCallToolResult } from '../util.js';
 import { SUCCESS_MESSAGE_TEMPLATE, ERROR_MESSAGE_PREFIX, processTemplate } from './prompt.js';
 import type { RegisterOptionsParams, RegisterOptionsResponse } from './schema.js';
+import { WorkflowState } from '../../../domain/term/workflow-state.js';
+import { updateState, WorkflowStateStorageError } from '../../../effect/workflow-state-storage.js';
 
 export const registerOptionsHandler = async (args: RegisterOptionsParams): Promise<CallToolResult> => {
   const result = OptionSelectionAggregate.registerOptions({
@@ -18,6 +20,30 @@ export const registerOptionsHandler = async (args: RegisterOptionsParams): Promi
       
       if (saveResult.isErr()) {
         return toCallToolResult([`${ERROR_MESSAGE_PREFIX}選択肢の保存に失敗しました: ${saveResult.error.message}`], true);
+      }
+
+      // 選択肢登録が成功したら状態を遷移
+      const stateResult = await updateState(WorkflowState.initialOptionsRegistered());
+      
+      if (stateResult.isErr()) {
+        const stateError = stateResult.error;
+        let message: string;
+        
+        switch (stateError.type) {
+          case 'invalid_transition':
+            message = `状態遷移エラー: ${stateError.from.type} から ${stateError.to.type} への遷移は無効です`;
+            break;
+          case 'file_system_error':
+            message = `ファイルシステムエラー: ${stateError.error.message}`;
+            break;
+          case 'parse_error':
+            message = `データ解析エラー: ${stateError.message}`;
+            break;
+          default:
+            message = `状態管理エラー: 予期しないエラーが発生しました`;
+        }
+        
+        return toCallToolResult([`${ERROR_MESSAGE_PREFIX}${message}`], true);
       }
 
       const options = event.optionList.options.map(option => ({
