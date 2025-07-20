@@ -18,7 +18,6 @@ type IssueDefinition = {
   issue: IssueText;
   context: ContextText;
   constraints: ConstraintText;
-  createdAt: Date;
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -97,8 +96,7 @@ const defineIssueCommand: DefineIssueCommand = (request) =>
       const issueDefinition: IssueDefinition = {
         issue: validated.issue,
         context: validated.context,
-        constraints: validated.constraints,
-        createdAt: new Date()
+        constraints: validated.constraints
       };
       
       // Return the event
