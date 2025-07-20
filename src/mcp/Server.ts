@@ -4,6 +4,7 @@ import { defineIssueTool } from './tool/define-issue/index.js';
 import { getCurrentStatusTool } from './tool/get-current-status/index.js';
 import { registerOptionsTool } from './tool/resister-options/index.js';
 import { identifyIssuePrompt } from './prompt/identify-issue/index.js';
+import { widenOptionsPrompt } from './prompt/widen-options/index.js';
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -32,7 +33,8 @@ export function createServer(): McpServer {
   });
 
   const prompts = [
-    identifyIssuePrompt
+    identifyIssuePrompt,
+    widenOptionsPrompt
   ];
 
   prompts.forEach(prompt => {
