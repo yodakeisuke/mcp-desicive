@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { exampleTool } from './tool/example/index.js';
+import { defineIssueTool } from './tool/define-issue/index.js';
 import { identifyIssuePrompt } from './prompt/identify-issue/index.js';
 
 export function createServer(): McpServer {
@@ -10,7 +11,8 @@ export function createServer(): McpServer {
   });
 
   const tools = [
-    exampleTool
+    exampleTool,
+    defineIssueTool
   ];
 
   tools.forEach(tool => {

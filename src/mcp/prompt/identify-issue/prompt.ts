@@ -25,7 +25,7 @@ Just extract the necessary information through dialogue.
 ## FINAL OUTPUT GOAL ##
 Through iterative dialogue, you must crystallize the issue into these three essential components:
 
-- **Problem/Challenge**: The REAL problem, not the symptom
+- **Issue**: The REAL problem, not the symptom
 - **Context and Purpose**: Why this matters NOW and what's at stake  
 - **Constraints**: What they can't or won't change (often the key)
 
