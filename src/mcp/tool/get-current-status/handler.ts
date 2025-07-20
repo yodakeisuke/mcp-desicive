@@ -33,11 +33,15 @@ const generateIssueExistsResponse = async (statusView: IssueStatusView, optionsV
   const workflowStateResult = await getCurrentState();
   const workflowState = workflowStateResult.isOk() ? workflowStateResult.value : { type: 'undefined' as const };
   
+  // Widen Options が最後の fixed である場合の条件チェック
+  const isWidenOptionsLastFixed = workflowState.type === 'options_fixed';
+  
   const nextActionGuidance = optionsView 
     ? "課題と選択肢が定義されています。次のアクションを検討してください：\n" +
       "• Reality-Test Assumptions（仮説を現実検証する）- 前提条件を検証する\n" +
       "• Attain Distance（距離を置いて判断する）- 客観的な視点で評価する\n" +
-      "• Prepare to be Wrong（間違いに備える）- リスクと対策を検討する"
+      "• Prepare to be Wrong（間違いに備える）- リスクと対策を検討する" +
+      (isWidenOptionsLastFixed ? "\n• 何もしない（そのリソースを他に使う）" : "")
     : "課題が定義されています。次のアクションを検討してください：\n" +
       "• Widen Options（選択肢を広げる）- 可能な解決策を洗い出す\n" +
       "• Reality-Test Assumptions（仮説を現実検証する）- 前提条件を検証する\n" +
