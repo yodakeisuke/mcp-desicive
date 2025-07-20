@@ -124,6 +124,7 @@ export const toStructuredCallToolResult = (
 
 ## File Structure
 
+### MCP Tools
 ```
 tool/
 ├── schema.ts      # Input/output schemas
@@ -131,6 +132,109 @@ tool/
 ├── prompt.ts      # AI guidance
 └── index.ts       # Tool export
 ```
+
+### MCP Prompts
+```
+prompt/
+├── schema.ts      # Input schemas
+├── handler.ts     # Prompt logic
+├── prompt.ts      # Pure prompt strings
+└── index.ts       # Prompt export
+```
+
+## Prompt String Separation Rule
+
+**All pure prompt strings must be extracted to `prompt.ts` files and imported where needed.**
+
+### Pattern for Prompts
+
+#### Static Prompts
+```typescript
+// prompt.ts - Pure prompt strings
+export const TOOL_PROMPT = `You are an expert in...
+Your task is to...
+Please follow these guidelines:
+- Guideline 1
+- Guideline 2`;
+
+// handler.ts - Import and use
+import { TOOL_PROMPT } from './prompt.js';
+
+export const promptHandler = async (args: PromptParams): Promise<GetPromptResult> => {
+  return {
+    description: "Tool description",
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: TOOL_PROMPT
+        }
+      }
+    ]
+  };
+};
+```
+
+#### Dynamic Prompts with Variables
+```typescript
+// prompt.ts - Template with Handlebars-like syntax
+export const DYNAMIC_PROMPT = `You are an expert in...
+
+{{#if context}}
+Context: {{context}}
+{{/if}}
+
+Your task is to process: {{task_description}}`;
+
+// schema.ts - Define input parameters
+export const promptSchema = z.object({
+  context: z.string().optional().describe("Optional context"),
+  task_description: z.string().describe("Task to process")
+});
+
+// handler.ts - Process template variables
+import { DYNAMIC_PROMPT } from './prompt.js';
+
+const processTemplate = (template: string, variables: Record<string, any>): string => {
+  let result = template;
+  
+  // Handle {{#if variable}} blocks
+  result = result.replace(/\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, varName, content) => {
+    return variables[varName] ? content : '';
+  });
+  
+  // Handle {{variable}} replacements
+  result = result.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
+    return variables[varName] || '';
+  });
+  
+  return result;
+};
+
+export const promptHandler = async (args: PromptParams): Promise<GetPromptResult> => {
+  const processedPrompt = processTemplate(DYNAMIC_PROMPT, args);
+  
+  return {
+    description: "Dynamic prompt with variables",
+    messages: [
+      {
+        role: "user",
+        content: {
+          type: "text",
+          text: processedPrompt
+        }
+      }
+    ]
+  };
+};
+```
+
+### Benefits of Separation
+- **Maintainability**: Easy to update prompt content
+- **Reusability**: Prompt strings can be shared across components
+- **Testability**: Direct testing of prompt constants
+- **Clarity**: Clear separation between logic and content
 
 ## Domain Integration
 
