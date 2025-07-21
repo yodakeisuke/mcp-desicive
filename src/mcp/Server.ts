@@ -9,9 +9,9 @@ import { widenOptionsPrompt } from './prompt/widen-options/index.js';
 
 export function createServer(): McpServer {
   const server = new McpServer({
-    name: 'mcp-template',
-    version: '0.0.1',
-    description: 'Minimal MCP server template with structured output',
+    name: 'mcp-decisive',
+    version: '0.0.2',
+    description: 'MCP server for WRAP decision-making framework with structured output',
   });
 
   const tools = [
