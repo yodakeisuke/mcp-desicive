@@ -34,15 +34,6 @@ Thumbs.db
 # CI/CD
 .github/
 
-# Build artifacts (keep only what's needed)
-human-ui/src/
-human-ui/node_modules/
-human-ui/package*.json
-human-ui/tsconfig*.json
-human-ui/vite.config.ts
-
-# Documentation source (keep built version)
-product_context/
-
-# Data files
-data/
+# Documentation
+CLAUDE.md
+README.md

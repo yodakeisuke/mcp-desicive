@@ -1,14 +1,52 @@
-# MCP Server Template
-A minimal typescript template for building MCP (Model Context Protocol) servers.
+# mcp-decisive
+
+MCP server for WRAP decision-making framework with structured output.
+
+## Installation
+
+Install the package via npm:
+
+```bash
+npm install -g mcp-decisive
+```
+
+## Configuration
+
+Add the following to your MCP client configuration (e.g., Claude Desktop or other MCP-compatible clients):
+
+```json
+{
+  "mcpServers": {
+    "decisive": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-decisive"
+      ]
+    }
+  }
+}
+```
 
 ## Features
-- **Vibe Coding Ready**: Pre-organized directory structure with complete rules and samples
-- **Implementation Guide**: Complete CLAUDE.md with patterns and examples
+- **WRAP Decision Framework**: Structured decision-making process support
+- **Structured Output**: Tools with validated input/output schemas
+- **Domain-Driven Design**: Clean architecture with domain, MCP, and effect layers
 
-## Quick Start
+## Development
+
+For local development:
+
 ```bash
+# Clone the repository
+git clone https://github.com/yodakeisuke/mcp-decisive.git
+cd mcp-decisive
+
 # Install dependencies
 npm install
+
+# Development mode (with hot reload)
+npm run dev
 
 # Build the server
 npm run build
