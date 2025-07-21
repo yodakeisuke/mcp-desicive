@@ -26,6 +26,7 @@ export function createServer(): McpServer {
     server.registerTool(
       tool.name,
       {
+        title: tool.title,
         description: tool.description,
         inputSchema: tool.parameters,
         outputSchema: tool.outputSchema.shape,

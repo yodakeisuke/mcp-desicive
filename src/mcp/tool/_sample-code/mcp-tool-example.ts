@@ -6,6 +6,7 @@ import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
  * 
  * This demonstrates the basic MCP Tool pattern with structured output:
  * - Zod schema for input/output validation
+ * - Title field for human-friendly display name
  * - Simple handler function
  * - Structured output response
  */
@@ -63,6 +64,7 @@ export const exampleHandler = async (args: ExampleParams): Promise<CallToolResul
 // Tool definition
 export const exampleTool = {
   name: 'example',
+  title: 'Example Tool',
   description: 'A minimal example tool demonstrating structured output',
   parameters: exampleParams,
   outputSchema: exampleOutputSchema,
