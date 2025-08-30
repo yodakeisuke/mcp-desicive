@@ -1,4 +1,5 @@
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { OptionSelectionAggregate } from '../../../domain/command/option-selection.js';
 import { Values } from '../../../domain/term/option.js';
 import { saveOptions } from '../../../effect/options-storage.js';
@@ -9,9 +10,9 @@ import { WorkflowState } from '../../../domain/term/workflow-state.js';
 import { updateState } from '../../../effect/workflow-state-storage.js';
 import { toWorkflowStateType } from '../../../domain/term/widen-options-steps.js';
 
-export const registerOptionsHandler = async (args: RegisterOptionsParams): Promise<CallToolResult> => {
+export const createRegisterOptionsHandler = (server: McpServer) => async (args: RegisterOptionsParams): Promise<CallToolResult> => {
   // Convert input format to RequestedOption format
-  const requestedOptions = args.options.map(option => {
+  let requestedOptions = args.options.map(option => {
     if (typeof option === 'string') {
       return { text: option };
     } else {
@@ -21,6 +22,57 @@ export const registerOptionsHandler = async (args: RegisterOptionsParams): Promi
       };
     }
   });
+
+  // If more than 5 options are provided, elicit user input to drop some
+  if (requestedOptions.length > 5) {
+    const toDrop = requestedOptions.length - 5;
+    try {
+      let remaining = requestedOptions.slice();
+      for (let step = 0; step < toDrop; step++) {
+        const elicitResult = await (server as any).server.elicitInput({
+          message: `候補が${requestedOptions.length}件あります。5件に収めるため、${toDrop}件を順に1件ずつ落としてください（${step + 1}/${toDrop}件目）。`,
+          requestedSchema: {
+            type: 'object',
+            properties: {
+              dropIndex: {
+                type: 'string',
+                title: '今回落とす候補',
+                description: 'リストから1件選択',
+                enum: Array.from({ length: remaining.length }, (_, i) => String(i + 1)),
+                enumNames: remaining.map((o, i) => `${i + 1}. ${o.text}`)
+              }
+            },
+            required: ['dropIndex']
+          }
+        });
+
+        if (elicitResult.action !== 'accept') {
+          return toCallToolResult([
+            `${ERROR_MESSAGE_PREFIX}ユーザー操作により選択肢の間引きが中断されました（action=${elicitResult.action}）。`],
+            true
+          );
+        }
+
+        const dropIndexRaw: unknown = (elicitResult as any).content?.dropIndex;
+        const parsed = typeof dropIndexRaw === 'string' && /^\d+$/.test(dropIndexRaw) ? parseInt(dropIndexRaw, 10) : NaN;
+        if (!Number.isInteger(parsed) || parsed < 1 || parsed > remaining.length) {
+          return toCallToolResult([
+            `${ERROR_MESSAGE_PREFIX}不正な選択です。もう一度やり直してください。`],
+            true
+          );
+        }
+
+        // Remove the selected index from remaining
+        remaining.splice(parsed - 1, 1);
+      }
+
+      requestedOptions = remaining;
+    } catch (e) {
+      return toCallToolResult([
+        `${ERROR_MESSAGE_PREFIX}対話的入力の取得に失敗しました: ${e instanceof Error ? e.message : String(e)}`
+      ], true);
+    }
+  }
 
   const result = OptionSelectionAggregate.registerOptions({
     options: requestedOptions

@@ -1,12 +1,12 @@
 import { registerOptionsParams, registerOptionsOutputSchema } from './schema.js';
-import { registerOptionsHandler } from './handler.js';
+import { createRegisterOptionsHandler } from './handler.js';
 import { TOOL_DESCRIPTION } from './prompt.js';
 
-export const registerOptionsTool = {
+export const createRegisterOptionsTool = (server: any) => ({
   name: 'register_options',
   title: 'Register Options',
   description: TOOL_DESCRIPTION,
   parameters: registerOptionsParams,
   outputSchema: registerOptionsOutputSchema,
-  handler: registerOptionsHandler
-};
+  handler: createRegisterOptionsHandler(server)
+});

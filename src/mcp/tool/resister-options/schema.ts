@@ -11,8 +11,7 @@ export const registerOptionsSchema = z.object({
     })
   ]))
     .min(3, "選択肢は3個以上で入力してください")
-    .max(5, "選択肢は5個以下で入力してください")
-    .describe("選択肢のリスト（各項目30文字まで、3-5個）。文字列または{text, supplementaryInfo}オブジェクトで指定"),
+    .describe("選択肢のリスト（各項目30文字まで、3個以上）。5個を超える場合は対話的に間引きを行います。文字列または{text, supplementaryInfo}オブジェクトで指定"),
   widenOptionsStep: WidenOptionsStepsSchema
     .describe("この操作が対応するWidenOptionsStepsの種類")
 });

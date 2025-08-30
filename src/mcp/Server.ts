@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { exampleTool } from './tool/example/index.js';
 import { defineIssueTool } from './tool/define-issue/index.js';
 import { getCurrentStatusTool } from './tool/get-current-status/index.js';
-import { registerOptionsTool } from './tool/resister-options/index.js';
+import { createRegisterOptionsTool } from './tool/resister-options/index.js';
 import { createMakeTripwireTool } from './tool/make-tripwire/index.js';
 import { resetTool } from './tool/reset/index.js';
 import { identifyIssuePrompt } from './prompt/identify-issue/index.js';
@@ -19,7 +19,7 @@ export function createServer(): McpServer {
     exampleTool,
     defineIssueTool,
     getCurrentStatusTool,
-    registerOptionsTool,
+    createRegisterOptionsTool(server),
     createMakeTripwireTool(server),
     resetTool
   ];
