@@ -22,7 +22,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.15.1",
+    "@modelcontextprotocol/sdk": "1.17.4",
     "neverthrow": "^8.2.0",
     "zod": "^3.24.5"
   },
