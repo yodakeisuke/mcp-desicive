@@ -4,6 +4,7 @@ import { defineIssueTool } from './tool/define-issue/index.js';
 import { getCurrentStatusTool } from './tool/get-current-status/index.js';
 import { registerOptionsTool } from './tool/resister-options/index.js';
 import { createMakeTripwireTool } from './tool/make-tripwire/index.js';
+import { resetTool } from './tool/reset/index.js';
 import { identifyIssuePrompt } from './prompt/identify-issue/index.js';
 import { widenOptionsPrompt } from './prompt/widen-options/index.js';
 
@@ -19,7 +20,8 @@ export function createServer(): McpServer {
     defineIssueTool,
     getCurrentStatusTool,
     registerOptionsTool,
-    createMakeTripwireTool(server)
+    createMakeTripwireTool(server),
+    resetTool
   ];
 
   tools.forEach(tool => {

@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a minimal MCP (Model Context Protocol) server template designed for rapid development with AI assistance. It provides a pre-organized structure with complete patterns for building MCP tools with structured output support.
+**mcp-decisive** implements the WRAP decision-making framework as an MCP (Model Context Protocol) server. It provides AI agents with structured tools and prompts to combat decision-making biases and execute high-quality decision processes.
+
+### Core Purpose
+- Addresses the 4 major decision biases: narrow framing, confirmation bias, short-term emotion, and overconfidence
+- Implements Chip & Dan Heath's WRAP framework (Widen Options / Reality-Test Assumptions / Attain Distance / Prepare to be Wrong)
+- Enables interleaved execution where agents can skip or revisit steps as needed
 
 ## Development Commands
 
@@ -41,26 +46,37 @@ npm run lint
 The codebase follows a clean architecture pattern with three main layers:
 
 1. **MCP Layer** (`src/mcp/`)
-   - Handles external communication via Model Context Protocol
-   - Tools expose domain operations to AI agents
-   - Implements structured output format for both text and data responses
+   - **Tools** (`src/mcp/tool/`): Expose domain operations to AI agents
+   - **Prompts** (`src/mcp/prompt/`): Guide AI agents through decision processes
+   - **Server Registration**: Tools and prompts registered in `src/mcp/Server.ts`
 
-2. **Domain Layer** (`src/domain/`) - Optional but recommended for complex logic
-   - `command/`: Command aggregates that produce events
-   - `read/`: Read models for queries  
-   - `term/`: Shared domain types and value objects
+2. **Domain Layer** (`src/domain/`)
+   - `command/`: Decision workflow commands (define-issue, option-selection)
+   - `read/`: Read models for querying decision state (current-status, options)
+   - `term/`: Domain value objects (issue-definition, option, workflow-state)
 
-3. **Effect Layer** (`src/effect/`) - Optional for side effects
-   - Storage operations, external API calls, etc.
+3. **Effect Layer** (`src/effect/`)
+   - File system operations for persisting decision state
+   - Storage implementations for issues, options, and workflow state
+
+### Key Decision-Making Tools
+
+Current implementation provides these core tools:
+
+- **define-issue**: Register a decision-making issue with context and constraints
+- **get-current-status**: Query the current decision workflow state
+- **register-options**: Add options to consider for the current issue  
+- **make-tripwire**: Create preparation for being wrong (WRAP's "P" step)
 
 ### MCP Tool Pattern
 
 All MCP tools follow this structure:
-- `schema.ts`: Zod schemas for input validation and output typing
-- `handler.ts`: Business logic orchestration using Result types
-- `index.ts`: Tool export with name, description, schemas, and handler
+- `schema.ts`: Zod schemas for input validation and structured output
+- `handler.ts`: Business logic using Result types from neverthrow
+- `prompt.ts`: Pure prompt strings separated from logic (when applicable)
+- `index.ts`: Tool export with name, title, description, parameters, outputSchema, and handler
 
-Tools must be registered in `src/mcp/Server.ts` using `server.registerTool()` for structured output support.
+Tools are registered in `src/mcp/Server.ts` using `server.registerTool()` for structured output support.
 
 ### Structured Output
 
@@ -68,40 +84,54 @@ Tools implement MCP's structured output format:
 - Return both human-readable text and machine-parseable data
 - Use `toStructuredCallToolResult()` utility from `src/mcp/tool/util.ts`
 - Output schema defined using Zod for validation
+- Enables AI agents to process both textual and structured responses
 
 ### Error Handling
 
-The template uses `neverthrow` for functional error handling:
+Uses `neverthrow` for functional error handling:
 - All operations return `Result<T, E>` or `ResultAsync<T, E>`
 - Chain operations with `.andThen()`, `.map()`, `.mapErr()`
 - Handle final results with `.match(onSuccess, onError)`
 
-## Key Implementation Patterns
+## Implementation Guidelines
 
-### Creating a New Tool
+### Creating New WRAP Tools
 
 1. Create directory: `src/mcp/tool/your-tool/`
-2. Define schemas with Zod (input and output)
-3. Implement handler with error handling
-4. Export tool definition with outputSchema
-5. Register in Server.ts
+2. Define input/output schemas with Zod
+3. Extract prompt strings to `prompt.ts` if needed
+4. Implement handler with domain integration
+5. Export tool definition with outputSchema
+6. Register in `src/mcp/Server.ts`
 
-### Domain Integration
+### Adding Decision-Making Prompts
 
-When implementing domain logic:
-- Commands validate and produce events
-- Read models query and transform data
-- Effects handle side effects with Result types
+1. Create directory: `src/mcp/prompt/your-prompt/`
+2. Define prompt parameters schema
+3. Create handler for dynamic prompt generation
+4. Extract prompt templates to `prompt.ts`
+5. Register in Server.ts using `server.registerPrompt()`
 
-## Reference Documentation
+### Domain State Management
 
-- **MCP Tool Guide**: `src/mcp/tool/CLAUDE.md` - Detailed patterns for tool implementation
-- **Example Tool**: `src/mcp/tool/example/` - Working example with structured output
-- **Sample Code**: `src/mcp/tool/_sample-code/` - Minimal implementation examples
+The system maintains decision state through:
+- **Workflow State**: Current step, issue, and progress tracking
+- **Issue Storage**: Registered decision problems with context
+- **Options Storage**: Available choices being evaluated
 
-## Important Notes
+State is persisted via the Effect layer using filesystem operations.
 
-- This is an ESM project (`"type": "module"` in package.json)
-- TypeScript target is ES2022 with NodeNext modules
-- Minimum Node.js version is 18.0.0
-- All imports must include `.js` extension for ESM compatibility
+## Architecture Principles
+
+- **Schema-First**: Input/output validation with Zod schemas
+- **Domain-Driven**: Clear separation of MCP, domain, and effect concerns
+- **Functional Error Handling**: Result types prevent exceptions
+- **Prompt Separation**: Pure prompt strings isolated from business logic
+- **ESM Compatibility**: All imports require `.js` extension
+
+## Important Technical Notes
+
+- ESM project (`"type": "module"` in package.json)
+- TypeScript target: ES2022 with NodeNext modules
+- Minimum Node.js version: 18.0.0
+- Uses Japanese text in some schemas and prompts (as per domain requirements)
