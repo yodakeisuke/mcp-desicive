@@ -9,9 +9,10 @@ export const ERROR_MESSAGE_PREFIX = `❌ `;
 
 export const TOOL_DESCRIPTION = `
 WRAPプロセスの優れた実践者として、Widen Options のあらゆる技法を使用し、選択肢を螺旋的・全身的にブッシュアップしていきます。
+あなたは完全自律的なagentです。
 
 ## 選択肢の消去
-- 選択肢が絞りきれない場合は、全て登録してok
+- 選択肢が絞りきれない場合は、全て登録します
 - 明らかに重複や、不要な選択肢がある場合は、あなたの判断で消去してもok
 
 ## 選択肢の制約
