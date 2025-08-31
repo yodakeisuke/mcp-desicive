@@ -1,5 +1,4 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { exampleTool } from './tool/example/index.js';
 import { defineIssueTool } from './tool/define-issue/index.js';
 import { getCurrentStatusTool } from './tool/get-current-status/index.js';
 import { createRegisterOptionsTool } from './tool/resister-options/index.js';
@@ -12,11 +11,10 @@ export function createServer(): McpServer {
   const server = new McpServer({
     name: 'mcp-decisive',
     version: '0.0.2',
-    description: 'MCP server for WRAP decision-making framework with structured output',
+    description: 'MCP server for WRAP decision-making framework',
   });
 
   const tools = [
-    exampleTool,
     defineIssueTool,
     getCurrentStatusTool,
     createRegisterOptionsTool(server),

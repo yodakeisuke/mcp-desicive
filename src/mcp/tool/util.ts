@@ -13,15 +13,15 @@ export const toCallToolResult = (
 };
 
 export const toStructuredCallToolResult = (
-  messages: string[],
   structuredContent: any,
+  messages: string[],
   isError: boolean,
 ): CallToolResult => {
   return {
+    structuredContent,
     content: messages.map(message =>
       ({ type: "text" as const, text: message })
     ),
-    structuredContent,
     isError,
   };
 };

@@ -163,8 +163,8 @@ export const createRegisterOptionsHandler = (server: McpServer) => async (args: 
       const nextActionPrompt = NEXT_ACTION_PROMPTS[widenOptionsStep.type];
 
       return toStructuredCallToolResult(
-        [successMessage, '', nextActionPrompt],
         response,
+        [nextActionPrompt],
         false
       );
     },
