@@ -164,7 +164,7 @@ export const createRegisterOptionsHandler = (server: McpServer) => async (args: 
 
       return toStructuredCallToolResult(
         response,
-        [],
+        [nextActionPrompt],
         false
       );
     },

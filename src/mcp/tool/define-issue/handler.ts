@@ -21,7 +21,7 @@ const generateSuccessResponse = (issue: string): CallToolResult => {
 
   return toStructuredCallToolResult(
     structuredData,
-    [],
+    [NEXT_ACTION_GUIDANCE],
     false
   );
 };
