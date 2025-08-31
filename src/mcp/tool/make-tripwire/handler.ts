@@ -97,8 +97,8 @@ export const createTripwireHandler = (server: McpServer) => {
       }
 
       return toStructuredCallToolResult(
-        [successMessage],
         finalValidation.data,
+        [],
         false
       );
 
@@ -136,8 +136,8 @@ export const createTripwireHandler = (server: McpServer) => {
       };
 
       return toStructuredCallToolResult(
-        [errorMessage],
         fallbackResponse,
+        [errorMessage],
         true
       );
     }
@@ -167,8 +167,8 @@ export const createTripwireHandler = (server: McpServer) => {
     };
 
     return toStructuredCallToolResult(
-      [`トリップワイヤー生成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`],
       errorResponse,
+      [`トリップワイヤー生成中にエラーが発生しました: ${error instanceof Error ? error.message : String(error)}`],
       true
     );
   }

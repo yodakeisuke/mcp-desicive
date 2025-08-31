@@ -72,11 +72,11 @@ const generateIssueExistsResponse = async (statusView: IssueStatusView, optionsV
     : '';
 
   return toStructuredCallToolResult(
+    structuredData,
     [
       statusText + optionsText,
       nextActionGuidance
     ],
-    structuredData,
     false
   );
 };
@@ -104,11 +104,8 @@ const generateNoIssueResponse = async (): Promise<CallToolResult> => {
   };
 
   return toStructuredCallToolResult(
-    [
-      `ワークフロー状態: ${getDisplayName(workflowState)}\n現在、課題は定義されていません。`,
-      nextActionGuidance
-    ],
     structuredData,
+    [],
     false
   );
 };
@@ -142,11 +139,11 @@ const generateFileSystemErrorResponse = (error: ReadError): CallToolResult => {
   }
 
   return toStructuredCallToolResult(
+    null,
     [
       errorMessage,
       correctionGuidance
     ],
-    null,
     true
   );
 };
@@ -166,11 +163,11 @@ export const getCurrentStatusHandler = async (args: unknown): Promise<CallToolRe
   const zodResult = getCurrentStatusSchema.safeParse(args);
   if (!zodResult.success) {
     return toStructuredCallToolResult(
+      null,
       [
         "入力パラメータが無効です。",
         "このツールはパラメータを必要としません。"
       ],
-      null,
       true
     );
   }

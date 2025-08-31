@@ -18,8 +18,8 @@ export const resetHandler = async (args: ResetParams): Promise<CallToolResult> =
     };
 
     return toStructuredCallToolResult(
-      ["❌ リセットコマンドの実行に失敗しました", JSON.stringify(response, null, 2)],
       response,
+      ["❌ リセットコマンドの実行に失敗しました", JSON.stringify(response, null, 2)],
       true
     );
   }
@@ -38,8 +38,8 @@ export const resetHandler = async (args: ResetParams): Promise<CallToolResult> =
     };
 
     return toStructuredCallToolResult(
-      ["❌ リセット処理中にエラーが発生しました", JSON.stringify(response, null, 2)],
       response,
+      ["❌ リセット処理中にエラーが発生しました", JSON.stringify(response, null, 2)],
       true
     );
   }
@@ -50,21 +50,8 @@ export const resetHandler = async (args: ResetParams): Promise<CallToolResult> =
   };
 
   return toStructuredCallToolResult(
-    [
-      "✅ 意思決定プロセスをリセットしました",
-      "",
-      "📝 削除されたデータ:",
-      "• 課題定義 (issue.json)",
-      "• 選択肢一覧 (options.json)", 
-      "• ワークフロー状態 (workflow-state.json)",
-      "",
-      `🕐 リセット時刻: ${commandResult.value.timestamp.toISOString()}`,
-      "",
-      "🔄 新しい意思決定プロセスを開始できます",
-      "",
-      JSON.stringify(response, null, 2)
-    ],
     response,
+    [],
     false
   );
 };

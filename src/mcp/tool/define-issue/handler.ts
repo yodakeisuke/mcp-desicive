@@ -20,11 +20,8 @@ const generateSuccessResponse = (issue: string): CallToolResult => {
   const structuredData: DefineIssueResponse = { issue };
 
   return toStructuredCallToolResult(
-    [
-      SUCCESS_MESSAGE_TEMPLATE(issue),
-      NEXT_ACTION_GUIDANCE
-    ],
     structuredData,
+    [],
     false
   );
 };
@@ -33,11 +30,11 @@ const generateDomainErrorResponse = (error: IssueDefinitionError): CallToolResul
   const errorMessage = IssueDefinitionAggregate.toErrorMessage(error);
   
   return toStructuredCallToolResult(
+    null,
     [
       DOMAIN_ERROR_MESSAGE,
       errorMessage
     ],
-    null,
     true
   );
 };
@@ -46,11 +43,11 @@ const generateFileSystemErrorResponse = (fsError: FileSystemError): CallToolResu
   const correctionGuidance = FILESYSTEM_ERROR_GUIDANCE[fsError.type] || FILESYSTEM_ERROR_GUIDANCE.unknown;
 
   return toStructuredCallToolResult(
+    null,
     [
       `ファイルシステムエラー: ${fsError.message}`,
       correctionGuidance
     ],
-    null,
     true
   );
 };
@@ -92,8 +89,8 @@ const generateStateErrorResponse = (stateError: WorkflowStateStorageError): Call
   }
 
   return toStructuredCallToolResult(
-    [message, guidance],
     null,
+    [message, guidance],
     true
   );
 };
@@ -107,11 +104,11 @@ export const defineIssueHandler = async (args: unknown): Promise<CallToolResult>
       errorMessages.map(msg => `• ${msg}`).join('\n');
 
     return toStructuredCallToolResult(
+      null,
       [
         VALIDATION_ERROR_MESSAGE,
         correctionGuidance
       ],
-      null,
       true
     );
   }
@@ -132,11 +129,11 @@ export const defineIssueHandler = async (args: unknown): Promise<CallToolResult>
         errorMessages.map(msg => `• ${msg}`).join('\n');
 
       return toStructuredCallToolResult(
+        null,
         [
           VALIDATION_ERROR_MESSAGE,
           correctionGuidance
         ],
-        null,
         true
       );
     }
