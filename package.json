@@ -1,6 +1,6 @@
 {
   "name": "mcp-decisive",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "MCP server for WRAP decision-making framework with structured output",
   "type": "module",
   "main": "dist/index.js",
